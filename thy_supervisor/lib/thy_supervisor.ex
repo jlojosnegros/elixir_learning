@@ -111,7 +111,7 @@ defmodule ThySupervisor do
   end
 
   def handle_call({:count_child}, _from, state) do
-    {:reply, Map.size(state), state}
+    {:reply, Kernel.map_size(state), state}
   end
 
   def handle_call({:which_child}, _from, state) do
@@ -130,7 +130,7 @@ defmodule ThySupervisor do
     # Cuando un proceso termina de manera normal
     # no tenemos nada que hacer, simplemente lo
     # sacamos del store de procesos y listo.
-    new_state = state |> Map.delete(state, pid)
+    new_state = state |> Map.delete(pid)
     {:noreply, new_state}
   end
 
@@ -220,10 +220,5 @@ defmodule ThySupervisor do
 
   defp terminate_children(child_specs) do
     child_specs |> Enum.each(fn pid, _ -> terminate_child(pid) end)
-  end
-
-  defp terminate_child(pid) do
-    Process.exit(pid, :kill)
-    :ok
   end
 end
