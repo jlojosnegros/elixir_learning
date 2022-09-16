@@ -45,7 +45,7 @@ defmodule ThySupervisor do
     state =
       child_spec_list
       |> start_children
-      |> Enum.into(HashDict.new())
+      |> Enum.into(Map.new())
 
     {:ok, state}
   end
@@ -53,7 +53,7 @@ defmodule ThySupervisor do
   def handle_call({:start_child, child_spec}, _from, state) do
     case start_child(child_spec) do
       {:ok, pid} ->
-        new_state = state |> HashDict.put(pid, child_spec)
+        new_state = state |> Map.put(pid, child_spec)
         {:reply, {:ok, pid}, new_state}
 
       :error ->
@@ -64,7 +64,7 @@ defmodule ThySupervisor do
   def handle_call({:terminate_child, pid}, _from, state) do
     case terminate_child(pid) do
       :ok ->
-        new_state = state |> HashDict.delete(pid)
+        new_state = state |> Map.delete(pid)
         {:reply, :ok, new_state}
 
       :error ->
@@ -74,7 +74,7 @@ defmodule ThySupervisor do
 
   def handle_call({:restart_child, pid, child_spec}, _from, state) do
     # Buscamos el pid en el estado
-    case HashDict.fetch(state, pid) do
+    case Map.fetch(state, pid) do
       # Si lo encontramos ...
       {:ok, _old_child_spec} ->
         # ... intentamos reiniciarlo ...
@@ -84,9 +84,9 @@ defmodule ThySupervisor do
             new_state =
               state
               # borramos el anterior pid
-              |> HashDict.delete(pid)
+              |> Map.delete(pid)
               # metemos el nuevo
-              |> HashDict.put(new_pid, child_spec)
+              |> Map.put(new_pid, child_spec)
 
             # y contestamos que todo OK
             {:reply, {:ok, pid}, new_state}
@@ -106,7 +106,7 @@ defmodule ThySupervisor do
     # No deberia de hacer falta porque se supone
     # que lo hemos borrado en el terminate_child
     # pero por si es matado por otras fuentes.
-    new_state = state |> HashDict.delete(pid)
+    new_state = state |> Map.delete(pid)
     {:noreply, new_state}
   end
 
