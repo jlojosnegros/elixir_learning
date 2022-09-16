@@ -126,6 +126,39 @@ defmodule ThySupervisor do
     {:noreply, new_state}
   end
 
+  def handle_info({:EXIT, pid, :normal}, state) do
+    # Cuando un proceso termina de manera normal
+    # no tenemos nada que hacer, simplemente lo
+    # sacamos del store de procesos y listo.
+    new_state = state |> Map.delete(state, pid)
+    {:noreply, new_state}
+  end
+
+  def handle_info({:EXIT, old_pid, _reason}, state) do
+    # Cuando un proceso termina por cualquier otra razon
+    # que no sea ":normal" ni ":killed" lo que tiene que
+    # hacer el Supervisor es reiniciar el proceso
+
+    case Map.fetch(state, old_pid) do
+      {:ok, child_spec} ->
+        case restart_child(old_pid, child_spec) do
+          {:ok, {pid, child_spec}} ->
+            new_state =
+              state
+              |> Map.delete(old_pid)
+              |> Map.put(pid, child_spec)
+
+            {:noreply, new_state}
+
+          :error ->
+            {:noreply, state}
+        end
+
+      :error ->
+        {:noreply, state}
+    end
+  end
+
   def terminate(_reason, state) do
     terminate_children(state)
   end
