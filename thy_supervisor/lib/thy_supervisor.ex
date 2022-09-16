@@ -111,7 +111,7 @@ defmodule ThySupervisor do
   end
 
   def handle_call({:count_child}, _from, state) do
-    {:reply, Dict.size(state), state}
+    {:reply, Map.size(state), state}
   end
 
   def handle_call({:which_child}, _from, state) do
