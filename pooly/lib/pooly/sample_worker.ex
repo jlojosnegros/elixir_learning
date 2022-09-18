@@ -10,6 +10,10 @@ defmodule SampleWorker do
     GenServer.call(pid, :stop)
   end
 
+  def init(:ok) do
+    {:ok, :ok}
+  end
+
   def handle_call(:stop, _from, state) do
     {:stop, :normal, :ok, state}
   end
