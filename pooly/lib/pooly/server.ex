@@ -39,6 +39,10 @@ defmodule Pooly.Server do
     GenServer.call(__MODULE__, :checkout)
   end
 
+  def checkin(worker_pid) do
+    GenServer.cast(__MODULE__, {:checkin, worker_pid})
+  end
+
   ############
   # CallBacks
   ############
@@ -107,6 +111,26 @@ defmodule Pooly.Server do
 
       [] ->
         {:reply, :noproc, state}
+    end
+  end
+
+  def handle_cast({:checkin, worker_pid}, %{workers: workers, monitors: monitors} = state) do
+    # look for the worker in database
+    case :ets.lookup(monitors, worker_pid) do
+      [{pid, ref}] ->
+        # if found ...
+        # ... do not monitor caller process anymore ...
+        true = Process.demonitor(ref)
+
+        # ... delete monitor from database table ...
+        true = :ets.delete(monitors, pid)
+
+        # ... and just return adding the worker to the pool
+        {:noreply, %{state | workers: [pid | workers]}}
+
+      [] ->
+        # ... if not found there is nothing to be done
+        {:noreply, state}
     end
   end
 
