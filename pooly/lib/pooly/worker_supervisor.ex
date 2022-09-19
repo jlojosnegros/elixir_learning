@@ -4,17 +4,22 @@ defmodule Pooly.WorkerSupervisor do
   ######
   # API
   ######
-  def start_link({_, _, _} = mfa) do
-    Supervisor.start_link(__MODULE__, mfa)
+  def start_link(pool_server, {_, _, _} = mfa) do
+    Supervisor.start_link(__MODULE__, [pool_server, mfa])
   end
 
   ############
   # Callbacks
   ############
-  def init({m, f, a}) do
+  def init([pool_server, {m, f, a}]) do
+    # This WorkerSupervisor is linked with its Pooly.PoolServer
+    # if any crashes the other one should be taken down.
+    Process.link(pool_server)
+
     worker_opts = [
-      # always restart a worker
-      restart: :permanent,
+      # never restart a worker ?!?!?!
+      restart: :temporary,
+      shutdown: 5000,
       # entry point for worker
       function: f
     ]

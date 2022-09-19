@@ -1,40 +1,49 @@
 defmodule Pooly.Supervisor do
+  @moduledoc """
+  This is the TOP level supervisor.
+  Supervisor is in charge of kick-starting:
+
+  - Pooly.Server
+  - Pooly.PoolsSuvervisor (note the plural)
+
+  When Pooly.PoolsSupervisor starts, it starts up individual Pooly.PoolSupervisors
+  that in turn will start their own Pooly.Server and Pooly.WorkerSupervisor
+
+  Brief:
+  - Pooly.Supervisor
+    - Pooly.Server
+    - Pooly.PoolsSupervisor
+      - Pooly.Supervisor
+        - Pooly.PoolServer
+        - Pooly.WorkerSupervisor
+          - Worker
+          - Worker
+          - ...
+      - Pooly.Supervisor
+        - Pooly.PoolServer
+        - Pooly.WorkerSupervisor
+          - Worker
+          - Worker
+          - ...
+      - ...
+  """
   use Supervisor
 
-  def start_link(pool_config) do
-    Supervisor.start_link(__MODULE__, pool_config)
+  def start_link(pools_config) do
+    # Supervisor is now a named process ... we only need one.
+    Supervisor.start_link(__MODULE__, pools_config, name: __MODULE__)
   end
 
-  def init(pool_config) do
-    # We only add Server here because Server starts
-    # WorkerSupervisor and it starts it by usin the
-    # high-level supervisor it receives by config here.
-    # So in the end both processes are supervised by
-    # this supervisor as siblings.
-    # ----------------------------------------------------
-    # Warning This is what I thought it would happen
-    # **BUT**
-    # despite the fact that Server uses the this Supervisor
-    # to start WorkerSupervisor
-    # **AND**
-    # that this supervisor
-    # would have the `:one_for_all strategy`
-    # Seems that dynamically started childs do NOT obey the
-    # same strategy
-    # **BECAUSE**
-    # when I have killed WorkerSupervisor nothing happens
-    # but if I kill Server everything (Server and WorkerSupervisor)
-    # is restarted.
-    # ----------------------------------------------------
+  def init(pools_config) do
     children = [
-      worker(Pooly.Server, [self(), pool_config])
+      supervisor(Pooly.PoolsSupervisor, []),
+      # No need to pass "self" as Supervisor is now a named process
+      worker(Pooly.Server, [pools_config])
     ]
 
-    # As both Server and WorkerSupervisor are linked
-    # and if one of them restarts its state will be
-    # incoherent with the other one we need to restart
-    # both of them if one crashes.
-    # So we use :one_for_all instead :one_for_one
+    # Still the server stores the state of the supervisor
+    # so both are linked and need to be restarted if any
+    # of them crash
     opts = [strategy: :one_for_all]
 
     supervise(children, opts)

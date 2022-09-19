@@ -1,215 +1,57 @@
 defmodule Pooly.Server do
   @moduledoc """
-   We wanna left Supervisor with a minimun amount of code
-   the less the coder the better because there are less chances for error
-   and as Supervisor main role is to be watcher for other error processes
-   it is better to keep them flawless.
-   So we need some other element to be the brain of the plan.
-   Here is where the "Server" came into play.
-   It will communicate with the High-level Supervisor and with the "sibling"
-   supervisor, in this case the WorkerSupervisor, and will keep the state
-   of the sibling supervisor. In fact, as it will have a reference to the
-   High-level supervisor (because it will be his parent) this server will
-   ask the High-level supervisor to create the WorkerSupervisor and will
-   then provide him with the configuration data to create the workers.
+   This server is gonna be simplified as the new Pooly.PoolServer
+   will be the one taking the decisions for each pool
   """
   use GenServer
   import Supervisor.Spec
 
-  defmodule State do
-    @doc """
-    Struct to maintain the state of the server
-    """
-    defstruct sup: nil, size: nil, mfa: nil, worker_sup: nil, workers: nil, monitors: nil
-  end
-
   ######
   # API
   ######
-  @doc """
-  Server needs both
-  - sup: Reference to the high-level supervisor
-  - pool_config: worker pool configuration.
-  """
-  def start_link(sup, pool_config) do
-    GenServer.start_link(__MODULE__, [sup, pool_config], name: __MODULE__)
+
+  def start_link(pools_config) do
+    # As we only have one PoolsSupervisor we only need one Server
+    # so we can make it a named process
+    GenServer.start_link(__MODULE__, pools_config, name: __MODULE__)
   end
 
-  def checkout do
-    GenServer.call(__MODULE__, :checkout)
+  def checkout(pool_name) do
+    GenServer.call(:"#{pool_name}Server", :checkout)
   end
 
-  def checkin(worker_pid) do
-    GenServer.cast(__MODULE__, {:checkin, worker_pid})
+  def checkin(pool_name, worker_pid) do
+    GenServer.cast(:"#{pool_name}Server", {:checkin, worker_pid})
   end
 
-  def status do
-    GenServer.call(__MODULE__, :status)
+  def status(pool_name) do
+    GenServer.call(:"#{pool_name}Server", :status)
   end
 
   ############
   # CallBacks
   ############
 
-  @doc """
-  init has  two responsibilities
-  - validate the pool_config
-  - initialize state ( as all good init/1 callbacks do)
+  def init(pools_config) when is_list(pools_config) do
+    pools_config
+    |> Enum.each(fn pool_config ->
+      send(self(), {:start_pool, pool_config})
+    end)
 
-  A valid pool_config look like:
-  [mfa: {SampleWorker, :start_link, []}, size: 5]
-
-  that is a keyword list with two keys "mfa" and "size"
-  """
-  def init([sup, pool_config]) when is_pid(sup) do
-    # Set the server process to trap exists =>
-    # When a linked process crashed Server does NOT crash
-    # but receives a message.
-    Process.flag(:trap_exit, true)
-    init(pool_config, %State{sup: sup})
+    {:ok, pools_config}
   end
 
-  # Note: remember that a keyword list is just syntactic sugar
-  # for a list of 2 element tuples where first element is an atom.
-  # This way we destruct the pool_config and store it in State
-  def init([{:mfa, mfa} | rest], state) do
-    init(rest, %{state | mfa: mfa})
-  end
-
-  def init([{:size, size} | rest], state) do
-    init(rest, %{state | size: size})
-  end
-
-  # This clause is to ignore any other element
-  # in the keyword list.
-  def init([_ | rest], state) do
-    init(rest, state)
-  end
-
-  def init([], state) do
-    # Here we are sure that the State has been built correctly
-    # SO we can start the WorkerSupervisor.
-    # BUT as init is sync and has to return asap we send a message
-    #     to ourselves (send return immediately) to do it later.
-    monitors = :ets.new(:monitors, [:private])
-    new_state = %{state | monitors: monitors}
-    send(self(), :start_worker_supervisor)
-    {:ok, new_state}
-  end
-
-  def handle_info(:start_worker_supervisor, state = %{sup: sup, mfa: mfa, size: size}) do
-    # Ask high-level supervisor to create a child with the given specification
-    # supervisor_spec creates a supervisor process spec instead of a worker spec
-    {:ok, worker_sup} = Supervisor.start_child(sup, supervisor_spec(mfa))
-
-    # Once we hace WorkerSupervisor up & running we use its pid
-    # stored in "worker_sup" to create a "size" number of workers
-    workers = prepopulate(size, worker_sup)
-
-    # update state with the WorkerSupervisor pid and the created workers
-    {:noreply, %{state | worker_sup: worker_sup, workers: workers}}
-  end
-
-  def handle_info({:DOWN, ref, _, _, _}, state = %{monitors: monitors, workers: workers}) do
-    # Need to handle the message sent to us by monitors when a
-    # consumer process who checked out a worker crashes.
-    case :ets.match(monitors, {:"$1", ref}) do
-      [[pid]] ->
-        true = :ets.delete(monitors, pid)
-        new_state = %{state | workers: [pid | workers]}
-        {:noreply, new_state}
-
-      [[]] ->
-        {:noreply, state}
-    end
-  end
-
-  def handle_info(
-        {:EXIT, pid, _reason},
-        state = %{monitors: monitors, workers: workers, worker_sup: worker_sup}
-      ) do
-    # here we handle the crash of a worker process
-    case :ets.lookup(monitors, pid) do
-      [{pid, ref}] ->
-        true = Process.demonitor(ref)
-        true = :ets.delete(monitors, pid)
-        new_state = %{state | workers: [new_worker(worker_sup) | workers]}
-        {:noreply, new_state}
-
-      [[]] ->
-        {:noreply, state}
-    end
-  end
-
-  def handle_call(:checkout, {from_pid, _ref}, %{workers: workers, monitors: monitors} = state) do
-    case workers do
-      [worker | rest] ->
-        ref = Process.monitor(from_pid)
-        true = :ets.insert(monitors, {worker, ref})
-        {:reply, worker, %{state | workers: rest}}
-
-      [] ->
-        {:reply, :noproc, state}
-    end
-  end
-
-  def handle_call(:status, _from, %{workers: workers, monitors: monitors} = state) do
-    {:reply, {length(workers), :ets.info(monitors, :size)}, state}
-  end
-
-  def handle_cast({:checkin, worker_pid}, %{workers: workers, monitors: monitors} = state) do
-    # look for the worker in database
-    case :ets.lookup(monitors, worker_pid) do
-      [{pid, ref}] ->
-        # if found ...
-        # ... do not monitor caller process anymore ...
-        true = Process.demonitor(ref)
-
-        # ... delete monitor from database table ...
-        true = :ets.delete(monitors, pid)
-
-        # ... and just return adding the worker to the pool
-        {:noreply, %{state | workers: [pid | workers]}}
-
-      [] ->
-        # ... if not found there is nothing to be done
-        {:noreply, state}
-    end
+  def handle_info({:start_pool, pool_config}, state) do
+    {:ok, _pool_sup} = Supervisor.start_child(Pooly.PoolsSupervisor, supervisor_spec(pool_config))
+    {:noreply, state}
   end
 
   ####################
   # Private Functions
   ####################
 
-  defp supervisor_spec(mfa) do
-    # This ask to NO restart WorkerSupervisor ever -- WHY?
-    # Well because we want to do a little more than just restart
-    # the WorkerSupervisor if it fails ... we wanna have some
-    # more control over "custom recovery rules" for workers.
-    opts = [restart: :temporary]
-    supervisor(Pooly.WorkerSupervisor, [mfa], opts)
-  end
-
-  defp prepopulate(size, sup) do
-    prepopulate(size, sup, [])
-  end
-
-  defp prepopulate(size, _sup, workers) when size < 1 do
-    workers
-  end
-
-  defp prepopulate(size, sup, workers) do
-    prepopulate(size - 1, sup, [new_worker(sup) | workers])
-  end
-
-  defp new_worker(sup) do
-    # Dynamically creates a worker and attach it to supervisor
-    # Note: "[[]]" its what make this call dynamic
-    # "[[]]" is a list of aditional arguments and as WorkerSupervisor
-    # is using a :simple_one_to_one strategy and the child_spec has
-    # been defined we can use this method.
-    # @warning DEPRECATED
-    {:ok, worker} = Supervisor.start_child(sup, [[]])
-    worker
+  defp supervisor_spec(pool_config) do
+    opts = [id: :"#{pool_config[:name]}Supervisor"]
+    supervisor(Pooly.PoolSupervisor, [pool_config], opts)
   end
 end
