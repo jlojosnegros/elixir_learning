@@ -62,6 +62,10 @@ defmodule Pooly.Server do
   that is a keyword list with two keys "mfa" and "size"
   """
   def init([sup, pool_config]) when is_pid(sup) do
+    # Set the server process to trap exists =>
+    # When a linked process crashed Server does NOT crash
+    # but receives a message.
+    Process.flag(:trap_exit, true)
     init(pool_config, %State{sup: sup})
   end
 
@@ -113,6 +117,23 @@ defmodule Pooly.Server do
       [[pid]] ->
         true = :ets.delete(monitors, pid)
         new_state = %{state | workers: [pid | workers]}
+        {:noreply, new_state}
+
+      [[]] ->
+        {:noreply, state}
+    end
+  end
+
+  def handle_info(
+        {:EXIT, pid, _reason},
+        state = %{monitors: monitors, workers: workers, worker_sup: worker_sup}
+      ) do
+    # here we handle the crash of a worker process
+    case :ets.lookup(monitors, pid) do
+      [{pid, ref}] ->
+        true = Process.demonitor(ref)
+        true = :ets.delete(monitors, pid)
+        new_state = %{state | workers: [new_worker(worker_sup) | workers]}
         {:noreply, new_state}
 
       [[]] ->
