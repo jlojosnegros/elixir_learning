@@ -226,6 +226,7 @@ defmodule Pooly.PoolServer do
     # been defined we can use this method.
     # @warning DEPRECATED
     {:ok, worker} = Supervisor.start_child(sup, [[]])
+    Process.link(worker)
     worker
   end
 
@@ -240,6 +241,7 @@ defmodule Pooly.PoolServer do
 
     case Supervisor.start_child(worker_sup, [[]]) do
       {:ok, worker} ->
+        Process.link(worker)
         {worker, mon_ref}
 
       _ ->
