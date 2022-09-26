@@ -1,6 +1,8 @@
 defmodule Pooly do
   use Application
 
+  require Logger
+
   @timeout 5000
 
   def start(_type, _args) do
@@ -29,6 +31,7 @@ defmodule Pooly do
   end
 
   def start_pool(pools_config) do
+    Logger.debug("Starting app ...")
     Pooly.Supervisor.start_link(pools_config)
   end
 

@@ -2,6 +2,8 @@ defmodule Pooly.PoolServer do
   use GenServer
   import Supervisor.Spec
 
+  require Logger
+
   defmodule State do
     defstruct pool_sup: nil,
               worker_sup: nil,
@@ -171,14 +173,17 @@ defmodule Pooly.PoolServer do
   end
 
   def handle_info(
-        {:EXIT, pid, _reason},
+        {:EXIT, pid, reason},
         state = %{
           monitors: monitors
         }
       ) do
+    Logger.debug(%{what: :worker_died, pid: pid, reason: reason})
+    Logger.debug("Worker has died")
     # here we handle the crash of a worker process
     case :ets.lookup(monitors, pid) do
       [{pid, ref}] ->
+        Logger.debug("worker pid found")
         true = Process.demonitor(ref)
         true = :ets.delete(monitors, pid)
         # Before handling overload we just return
