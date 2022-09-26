@@ -24,3 +24,5 @@ pooly-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+.history/
