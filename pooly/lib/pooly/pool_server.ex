@@ -1,6 +1,5 @@
 defmodule Pooly.PoolServer do
   use GenServer
-  import Supervisor.Spec
 
   require Logger
 
@@ -145,7 +144,9 @@ defmodule Pooly.PoolServer do
         :start_worker_supervisor,
         state = %{pool_sup: pool_sup, name: name, mfa: mfa, size: size}
       ) do
-    {:ok, worker_sup} = Supervisor.start_child(pool_sup, supervisor_spec(name, mfa))
+    sup_spec = supervisor_spec(name, mfa)
+    Logger.debug(%{a_what: "handle_info", spec: sup_spec})
+    {:ok, worker_sup} = Supervisor.start_child(pool_sup, sup_spec)
     workers = prepopulate(size, worker_sup)
     {:noreply, %{state | worker_sup: worker_sup, workers: workers}}
   end
@@ -265,7 +266,7 @@ defmodule Pooly.PoolServer do
       restart: :temporary
     ]
 
-    supervisor(Pooly.WorkerSupervisor, [self(), mfa], opts)
+    Pooly.Specs.supervisor_spec(Pooly.WorkerSupervisor, [self(), mfa], opts)
   end
 
   defp handle_checkin(pid, state) do

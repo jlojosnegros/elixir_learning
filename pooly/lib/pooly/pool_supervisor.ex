@@ -11,9 +11,13 @@ defmodule Pooly.PoolSupervisor do
     ]
 
     children = [
-      worker(Pooly.PoolServer, [self(), pool_config])
+      worker_spec(pool_config)
     ]
 
-    supervise(children, opts)
+    Supervisor.init(children, opts)
+  end
+
+  defp worker_spec(pool_config) do
+    Pooly.Specs.worker_spec(Pooly.PoolServer, [self(), pool_config])
   end
 end

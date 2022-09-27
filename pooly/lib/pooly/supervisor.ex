@@ -36,9 +36,9 @@ defmodule Pooly.Supervisor do
 
   def init(pools_config) do
     children = [
-      supervisor(Pooly.PoolsSupervisor, []),
+      pools_supervisor_spec(),
       # No need to pass "self" as Supervisor is now a named process
-      worker(Pooly.Server, [pools_config])
+      server_spec(pools_config)
     ]
 
     # Still the server stores the state of the supervisor
@@ -46,6 +46,14 @@ defmodule Pooly.Supervisor do
     # of them crash
     opts = [strategy: :one_for_all]
 
-    supervise(children, opts)
+    Supervisor.init(children, opts)
+  end
+
+  defp pools_supervisor_spec() do
+    Pooly.Specs.supervisor_spec(Pooly.PoolsSupervisor, [])
+  end
+
+  defp server_spec(pools_config) do
+    Pooly.Specs.worker_spec(Pooly.Server, [pools_config])
   end
 end

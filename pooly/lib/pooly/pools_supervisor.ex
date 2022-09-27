@@ -17,6 +17,6 @@ defmodule Pooly.PoolsSupervisor do
 
     # We have to validate the pools_config before creating any pool
     # so we do not have any children at start.
-    supervise([], opts)
+    Supervisor.init([], opts)
   end
 end

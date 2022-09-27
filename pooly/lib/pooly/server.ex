@@ -4,7 +4,6 @@ defmodule Pooly.Server do
    will be the one taking the decisions for each pool
   """
   use GenServer
-  import Supervisor.Spec
 
   ######
   # API
@@ -54,7 +53,10 @@ defmodule Pooly.Server do
   ####################
 
   defp supervisor_spec(pool_config) do
-    opts = [id: :"#{pool_config[:name]}Supervisor"]
-    supervisor(Pooly.PoolSupervisor, [pool_config], opts)
+    opts = [
+      id: :"#{pool_config[:name]}Supervisor"
+    ]
+
+    Pooly.Specs.supervisor_spec(Pooly.PoolSupervisor, [pool_config], opts)
   end
 end

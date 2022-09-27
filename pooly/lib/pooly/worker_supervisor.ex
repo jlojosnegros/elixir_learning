@@ -19,15 +19,11 @@ defmodule Pooly.WorkerSupervisor do
     worker_opts = [
       # never restart a worker ?!?!?!
       restart: :temporary,
-      shutdown: 5000,
-      # entry point for worker
-      function: f
+      shutdown: 5000
     ]
 
     children = [
-      # Supervisor.Spec.worker is a helper function
-      # to create a worker specification
-      worker(m, a, worker_opts)
+      Pooly.Specs.worker_spec(m, f, a, worker_opts)
     ]
 
     opts = [
@@ -47,6 +43,6 @@ defmodule Pooly.WorkerSupervisor do
 
     # init return must be a supervisor specification.
     # Supervisor.Spec.supervise return this.
-    supervise(children, opts)
+    Supervisor.init(children, opts)
   end
 end
