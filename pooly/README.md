@@ -82,3 +82,27 @@ For now, this returns a tuple such as `{3, 2}`. This means there are three free 
 and two busy ones.
 
 That concludes our short tour of the API.
+
+## Design
+
+  When `Pooly.PoolsSupervisor` starts, it starts up individual `Pooly.PoolSupervisors`
+  that in turn will start their own `Pooly.Server` and `Pooly.WorkerSupervisor`
+
+  Brief:
+
+- Pooly.Supervisor
+  - Pooly.Server
+  - Pooly.PoolsSupervisor
+    - Pooly.Supervisor
+      - Pooly.PoolServer
+      - Pooly.WorkerSupervisor
+        - Worker
+        - Worker
+        - ...
+    - Pooly.Supervisor
+      - Pooly.PoolServer
+      - Pooly.WorkerSupervisor
+        - Worker
+        - Worker
+        - ...
+    - ...
