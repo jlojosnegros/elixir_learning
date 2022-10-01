@@ -1,18 +1,9 @@
 defmodule Blitzy do
-  @moduledoc """
-  Documentation for `Blitzy`.
-  """
+  def run(num_workers, url) when num_workers > 0 do
+    worker_fun = fn -> Blitzy.Worker.start(url, self()) end
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Blitzy.hello()
-      :world
-
-  """
-  def hello do
-    :world
+    1..num_workers
+    |> Enum.map(fn _ -> Task.async(worker_fun) end)
+    |> Enum.map(&Task.await(&1, :infinity))
   end
 end
