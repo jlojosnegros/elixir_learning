@@ -3,10 +3,10 @@ defmodule Blitzy.Worker do
 
   require Logger
 
-  def start(url) do
+  def start(url, getter_func \\ &HTTPoison.get/1) do
     # Duration.measure returns a tuple with the elapsedtime
     # for the executed function and the function return value
-    {timestamp, response} = Duration.measure(fn -> HTTPoison.get(url) end)
+    {timestamp, response} = Duration.measure(fn -> getter_func.(url) end)
 
     handle_response({Duration.to_milliseconds(timestamp), response})
   end
