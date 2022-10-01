@@ -1,4 +1,11 @@
 defmodule Blitzy do
+  use Application
+
+  def start(_type, _args) do
+    # !!!! NEVER EVER FORGET TO START YOUR TOP LEVEL SUPERVISOR
+    Blitzy.Supervisor.start_link(:ok)
+  end
+
   def run(num_workers, url) when num_workers > 0 do
     worker_fun = fn -> Blitzy.Worker.start(url, self()) end
 
