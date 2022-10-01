@@ -9,6 +9,16 @@ defmodule Blitzy do
     |> parse_results()
   end
 
+  def parse_task_results(task_results) do
+    task_results
+    |> parse_results()
+  end
+
+  defp task_results_to_results(task_results) do
+    task_results
+    |> Enum.map(fn {_pid, result} -> result end)
+  end
+
   defp parse_results(results) do
     # first get results (is a list) and split it into
     # success and failures knowing that {:ok, anything} is
