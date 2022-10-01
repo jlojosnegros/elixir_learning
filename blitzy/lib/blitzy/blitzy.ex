@@ -4,6 +4,6 @@ defmodule Blitzy.Blitzy do
 
     1..num_workers
     |> Enum.map(fn _ -> Task.async(worker_fun) end)
-    |> Enum.map(&Task.await(&1))
+    |> Enum.map(&Task.await(&1, :infinity))
   end
 end
