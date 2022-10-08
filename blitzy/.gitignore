@@ -26,3 +26,5 @@ blitzy-*.tar
 /tmp/
 
 .history/
+blitzy
+mix.lock
