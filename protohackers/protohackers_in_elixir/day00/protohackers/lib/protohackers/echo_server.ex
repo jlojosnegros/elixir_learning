@@ -49,8 +49,6 @@ defmodule Protohackers.EchoServer do
       {:error, reason} ->
         {:stop, reason}
     end
-
-    {:ok, %__MODULE__{}}
   end
 
   @impl true
@@ -62,7 +60,7 @@ defmodule Protohackers.EchoServer do
     case :gen_tcp.accept(state.listen_socket) do
       {:ok, socket} ->
         handle_connection(socket)
-        {:noreply, {:continue, :accept}}
+        {:noreply, state, {:continue, :accept}}
 
       {:error, reason} ->
         {:stop, reason}
@@ -70,8 +68,8 @@ defmodule Protohackers.EchoServer do
   end
 
   ## Helpers
-  def handle_connection(socket) do
-    case recv_until_close(socket, _buffer = "") do
+  defp handle_connection(socket) do
+    case recv_until_closed(socket, _buffer = "") do
       {:ok, data} ->
         :gen_tcp.send(socket, data)
 
@@ -83,14 +81,14 @@ defmodule Protohackers.EchoServer do
     :gen_tcp.close(socket)
   end
 
-  def recv_until_close(socket, buffer) do
+  defp recv_until_closed(socket, buffer) do
     case :gen_tcp.recv(socket, _nbytes = 0, _timeout = 10_000) do
       {:ok, data} ->
         # [buffer, data] -> en lugar de concatenar los binarios esta usando iodata
         # parece que es una estructura tipo arbol que se usa mucho en erlang/elixir
         # asi que podemos usarla sin necesidad de concatenar al final porque lo entienen
         # casi todos los interfaces de w/r binarios
-        recv_until_close(socket, [buffer, data])
+        recv_until_closed(socket, [buffer, data])
 
       {:error, :closed} ->
         # the other side ( the client) has closed its write end of the socket
