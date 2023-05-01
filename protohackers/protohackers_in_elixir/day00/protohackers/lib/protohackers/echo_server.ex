@@ -18,9 +18,29 @@ defmodule Protohackers.EchoServer do
 
   @impl true
   def init(:no_state) do
-    Logger.info("Starting echo server")
+
     # Here we need to initialize the echo server ...
-    # but lets return an empty state right now.
+
+    listen_options = [
+      mode: :binary,
+      active: false,
+      reuseaddr: true
+    ]
+
+    # using gen_tcp as tcp library ( from Erlang)
+    # If everythin goes ok we get the listen socket
+    # and return it in the state
+    # Otherwise stop the server with the reason.
+    case :gen_tcp.listen(5001, listen_options) do
+      {:ok, listen_socket} ->
+        Logger.info("Starting echo server on port 5001")
+        state = %__MODULE__{listen_socket: listen_socket}
+        {:ok, state}
+
+      {:error, reason} ->
+        {:stop, reason}
+    end
+
     {:ok, %__MODULE__{}}
   end
 end
