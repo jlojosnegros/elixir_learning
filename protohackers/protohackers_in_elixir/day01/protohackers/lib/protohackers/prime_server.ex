@@ -32,7 +32,7 @@ defmodule Protohackers.PrimeServer do
       # with them. ( See documentation for more.)
       packet: :line,
       # We can change the buffer size for the socket.
-      buffer: 1024 * 100,
+      buffer: 1024 * 100
     ]
 
     # using gen_tcp as tcp library ( from Erlang)
@@ -83,7 +83,8 @@ defmodule Protohackers.PrimeServer do
   ## Helpers
   defp handle_connection(socket) do
     case echo_lines_until_close(socket) do
-      :ok -> :ok
+      :ok ->
+        :ok
 
       {:error, reason} ->
         Logger.error("Failed to receive data: #{inspect(reason)}")
@@ -95,7 +96,6 @@ defmodule Protohackers.PrimeServer do
 
   defp echo_lines_until_close(socket) do
     case :gen_tcp.recv(socket, _nbytes = 0, _timeout = 10_000) do
-
       {:ok, data} ->
         Logger.debug("Received data: #{inspect(data)}")
 
@@ -110,6 +110,7 @@ defmodule Protohackers.PrimeServer do
             :gen_tcp.send(socket, "malformed request\n")
             {:error, reason}
         end
+
         # Now when we have a line we need to return the line.
         # we add a new line cause the gen_tcp does not do it.
         :gen_tcp.send(socket, [data, ?\n])
