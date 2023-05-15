@@ -31,6 +31,8 @@ defmodule Protohackers.PrimeServer do
       # which type of packet are we dealing with so it could help us
       # with them. ( See documentation for more.)
       packet: :line,
+      # We can change the buffer size for the socket.
+      buffer: 1024 * 100,
     ]
 
     # using gen_tcp as tcp library ( from Erlang)
@@ -39,6 +41,12 @@ defmodule Protohackers.PrimeServer do
     # Otherwise stop the server with the reason.
     case :gen_tcp.listen(5002, listen_options) do
       {:ok, listen_socket} ->
+        # With "packet: :line" option gen_tcp docs inform
+        # that all lines with greater length than the socket buffer
+        # will be truncated.
+        # As we need to protect against this we need to know
+        # internal buffer socket size.
+        dbg(:inet.getopts(listen_socket, [:buffer]))
         Logger.info("Starting prime server on port 5002")
         state = %__MODULE__{listen_socket: listen_socket}
         # Here we already have the listen socket.
