@@ -100,15 +100,22 @@ defmodule Protohackers.PrimeServer do
         Logger.debug("Received data: #{inspect(data)}")
 
         case Jason.decode(data) do
-          {:ok, json} ->
-            Logger.debug("Received data: #{inspect(json)}")
-            :gen_tcp.send(socket, [Jason.encode!(json), ?\n])
+          # Check for a protocol valid request
+          {:ok, %{"method" => "isPrime", "number" => number}} when is_number(number) ->
+            Logger.debug("Received valid request for number: #{number}")
+
+            # build a response
+            response = %{"method" => "isPrime", "prime" => prime?(number)}
+            # send response
+            :gen_tcp.send(socket, [Jason.encode!(response), ?\n])
+
+            # and loop recursively
             echo_lines_until_close(socket)
 
-          {:error, reason} ->
-            Logger.debug("Received invalid request: #{inspect(data)}")
+          other ->
+            Logger.debug("Received invalid request: #{inspect(other)}")
             :gen_tcp.send(socket, "malformed request\n")
-            {:error, reason}
+            {:error, :invalid_request}
         end
 
         # Now when we have a line we need to return the line.
@@ -124,5 +131,15 @@ defmodule Protohackers.PrimeServer do
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  # lest write a "simple" implementation of isPrime
+  defp prime?(number) when is_float(number), do: false
+  defp prime?(number) when number <= 1, do: false
+  defp prime?(number) when number in [2, 3], do: true
+
+  # not a fucking idea right now
+  defp prime?(number) do
+    not Enum.any?(2..trunc(:math.sqrt(number)), &(rem(number, &1) == 0))
   end
 end
