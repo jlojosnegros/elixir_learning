@@ -98,6 +98,18 @@ defmodule Protohackers.PrimeServer do
 
       {:ok, data} ->
         Logger.debug("Received data: #{inspect(data)}")
+
+        case Jason.decode(data) do
+          {:ok, json} ->
+            Logger.debug("Received data: #{inspect(json)}")
+            :gen_tcp.send(socket, [Jason.encode!(json), ?\n])
+            echo_lines_until_close(socket)
+
+          {:error, reason} ->
+            Logger.debug("Received invalid request: #{inspect(data)}")
+            :gen_tcp.send(socket, "malformed request\n")
+            {:error, reason}
+        end
         # Now when we have a line we need to return the line.
         # we add a new line cause the gen_tcp does not do it.
         :gen_tcp.send(socket, [data, ?\n])
