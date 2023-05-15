@@ -26,6 +26,11 @@ defmodule Protohackers.PrimeServer do
       reuseaddr: true,
       # need this to be able to write on a closed socket
       exit_on_close: false,
+      # this option will make GenTCP to only return one line at a time.
+      # "packet" option has multiple possible values to inform GenTCP
+      # which type of packet are we dealing with so it could help us
+      # with them. ( See documentation for more.)
+      packet: :line,
     ]
 
     # using gen_tcp as tcp library ( from Erlang)
@@ -69,9 +74,8 @@ defmodule Protohackers.PrimeServer do
 
   ## Helpers
   defp handle_connection(socket) do
-    case recv_until_closed(socket, _buffer = "") do
-      {:ok, data} ->
-        :gen_tcp.send(socket, data)
+    case echo_lines_until_close(socket) do
+      :ok -> :ok
 
       {:error, reason} ->
         Logger.error("Failed to receive data: #{inspect(reason)}")
@@ -81,19 +85,20 @@ defmodule Protohackers.PrimeServer do
     :gen_tcp.close(socket)
   end
 
-  defp recv_until_closed(socket, buffer) do
+  defp echo_lines_until_close(socket) do
     case :gen_tcp.recv(socket, _nbytes = 0, _timeout = 10_000) do
+
       {:ok, data} ->
-        # [buffer, data] -> en lugar de concatenar los binarios esta usando iodata
-        # parece que es una estructura tipo arbol que se usa mucho en erlang/elixir
-        # asi que podemos usarla sin necesidad de concatenar al final porque lo entienen
-        # casi todos los interfaces de w/r binarios
-        recv_until_closed(socket, [buffer, data])
+        Logger.debug("Received data: #{inspect(data)}")
+        # Now when we have a line we need to return the line.
+        # we add a new line cause the gen_tcp does not do it.
+        :gen_tcp.send(socket, [data, ?\n])
+        echo_lines_until_close(socket)
 
       {:error, :closed} ->
         # the other side ( the client) has closed its write end of the socket
         # so we have finished with this socket.
-        {:ok, buffer}
+        :ok
 
       {:error, reason} ->
         {:error, reason}
