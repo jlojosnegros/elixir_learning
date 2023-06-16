@@ -3,6 +3,8 @@ defmodule Protohackers.PricesServer do
 
   require Logger
 
+  alias Protohackers.PricesServer.Db
+
   # We do not need to pass params or state to init -> :no_state
   # we use `[] = _opts` because we do not need to pass ops to `start_link`
   # but also DO NOT WANT to accept any options by mistake.
@@ -69,9 +71,9 @@ defmodule Protohackers.PricesServer do
 
   ## Helpers
   defp handle_connection(socket) do
-    case recv_until_closed(socket, _buffer = "") do
-      {:ok, data} ->
-        :gen_tcp.send(socket, data)
+    case handle_requests(socket, Db.new()) do
+      :ok ->
+        :ok
 
       {:error, reason} ->
         Logger.error("Failed to receive data: #{inspect(reason)}")
@@ -81,22 +83,43 @@ defmodule Protohackers.PricesServer do
     :gen_tcp.close(socket)
   end
 
-  defp recv_until_closed(socket, buffer) do
-    case :gen_tcp.recv(socket, _nbytes = 0, _timeout = 10_000) do
-      {:ok, data} ->
-        # [buffer, data] -> en lugar de concatenar los binarios esta usando iodata
-        # parece que es una estructura tipo arbol que se usa mucho en erlang/elixir
-        # asi que podemos usarla sin necesidad de concatenar al final porque lo entienen
-        # casi todos los interfaces de w/r binarios
-        recv_until_closed(socket, [buffer, data])
+  defp handle_requests(socket, db) do
+    case :gen_tcp.recv(socket, _nbytes = 9, _timeout = 10_000) do
+      {:ok, data} when byte_size(data) == 9 ->
+        case handle_request(data, db) do
+          {nil, db} ->
+            handle_requests(socket, db)
+
+          {response, db} ->
+            :gen_tcp.send(socket, response)
+            handle_requests(socket, db)
+
+          :error ->
+            {:error, :invalid_request}
+        end
+
+      {:error, :timeout} ->
+        handle_requests(socket, db)
 
       {:error, :closed} ->
         # the other side ( the client) has closed its write end of the socket
         # so we have finished with this socket.
-        {:ok, buffer}
+        :ok
 
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  # ?I -> ascii for 'I'
+  defp handle_request(<<?I, timestamp::32-signed-big, price::32-signed-big>>, db) do
+    {nil, Db.add(db, timestamp, price)}
+  end
+  defp handle_request(<<?Q, mintime::32-signed-big, maxtime::32-signed-big>>, db) do
+    avg = Db.query(db, mintime, maxtime)
+    {<<avg::32-signed-big>>, db}
+  end
+  defp handle_request(_other, _db) do
+    :error
   end
 end
