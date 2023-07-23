@@ -1,18 +1,29 @@
+# this is the  file where de API resides
 defmodule Hangman do
   @moduledoc """
-  Documentation for `Hangman`.
+  This is the API for Hangman game
   """
+  @doc """
+  Create a new game.
+
+  Need no params
+  Will return a new Hangman game object
+  Should be the first function called for any new game
+  """
+  def new_game do
+  end
 
   @doc """
-  Hello world.
+  Let the client do a new guess.
 
-  ## Examples
+  Params:
+  - game: Current game state
+  - guess: New guess for the game.
 
-      iex> Hangman.hello()
-      :world
-
+  Return:
+  - game: New game state after the guess
+  - tally: Client side information (turns left, letters used, etc)
   """
-  def hello do
-    :world
+  def make_move(_game, _guess) do
   end
 end
