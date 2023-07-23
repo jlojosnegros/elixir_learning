@@ -23,13 +23,25 @@ defmodule Hangman.Impl.Game do
   )
 
   def new_game do
+    new_game(Dictionary.random_word())
+  end
+
+  def new_game(word) do
     # NOTE - Structs are named always after the module.
     #     Elixir declares __MODULE__ as the name of the module
     #     so this is a way to avoid typing and errors if the name of the module changes.
     %__MODULE__{
       # NOTE - As we are using Dictionary we need to add it to mix.exs
       #     Check that file to see how to add a relative module.
-      letters: Dictionary.random_word() |> String.codepoints()
+      letters: word |> String.codepoints()
     }
+
+    # NOTE - To improve testing we need to be able to check for the proper word
+    #     *BUT* we cannot do it if the word is random.
+    #     To solve this situation we create this new function where the word is
+    #     choosen by the incoming parameter
+    #     *BUT* as it is not part of the API it cannot be use by clients
+    #     **AND** as the new_game used by clients depends on this implementation
+    #     everythin is coherent
   end
 end
