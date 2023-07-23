@@ -2,7 +2,10 @@ defmodule Hangman.Impl.Game do
   # NOTE - It is a convention to  define the module type as `t`
   #     Syntax is very like the data definition but using type names instead of values
   #     Note that parenthesis after `t` are not required unless you want to parameterize a type
-  @type t :: %Hangman.Impl.Game{
+  # NOTE - Structs are named always after the module.
+  #     Elixir declares __MODULE__ as the name of the module
+  #     so this is a way to avoid typing and errors if the name of the module changes.
+  @type t :: %__MODULE__{
           turns_left: integer,
           game_state: Hangman.state(),
           letters: list(String.t()),
@@ -20,7 +23,10 @@ defmodule Hangman.Impl.Game do
   )
 
   def new_game do
-    %Hangman.Impl.Game{
+    # NOTE - Structs are named always after the module.
+    #     Elixir declares __MODULE__ as the name of the module
+    #     so this is a way to avoid typing and errors if the name of the module changes.
+    %__MODULE__{
       # NOTE - As we are using Dictionary we need to add it to mix.exs
       #     Check that file to see how to add a relative module.
       letters: Dictionary.random_word() |> String.codepoints()
