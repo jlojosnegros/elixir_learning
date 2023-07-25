@@ -1,4 +1,6 @@
 defmodule Hangman.Impl.Game do
+  alias Hangman.Type
+
   # NOTE - It is a convention to  define the module type as `t`
   #     Syntax is very like the data definition but using type names instead of values
   #     Note that parenthesis after `t` are not required unless you want to parameterize a type
@@ -7,7 +9,7 @@ defmodule Hangman.Impl.Game do
   #     so this is a way to avoid typing and errors if the name of the module changes.
   @type t :: %__MODULE__{
           turns_left: integer,
-          game_state: Hangman.state(),
+          game_state: Type.state(),
           letters: list(String.t()),
           used: MapSet.t(String.t())
         }
@@ -22,10 +24,12 @@ defmodule Hangman.Impl.Game do
     used: MapSet.new()
   )
 
+  @spec new_game :: t()
   def new_game do
     new_game(Dictionary.random_word())
   end
 
+  @spec new_game(String.t()) :: t()
   def new_game(word) do
     # NOTE - Structs are named always after the module.
     #     Elixir declares __MODULE__ as the name of the module
