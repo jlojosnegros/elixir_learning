@@ -9,6 +9,10 @@ defmodule Hangman do
   # NOTE - Elixir does NOT have enums but we can use a list of atoms for that
   #     Here we define the `state` type saying it can be any of the following atoms
   #     as they are linked by OR
+  # FIXME - Right now we have a kind of circular dependency.
+  #      Here we have defined the state type and we reference it in the Impl module
+  #      And Here we are referencing the `Game.t` type that is declared in the Impl module
+  #     Good luck that Elixir is smart enough to handle this, but is still a design failure
   @type state :: :initializing | :won | :lost | :good_guess | :bad_guess | :already_used
 
   # NOTE -  We now define the proper type. BUT as we want this to be an implementation detail
