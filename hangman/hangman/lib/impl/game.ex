@@ -49,12 +49,29 @@ defmodule Hangman.Impl.Game do
     #     everythin is coherent
   end
 
+  #####################################################################################
   @spec make_move(t, String.t()) :: {t, Type.tally()}
   def make_move(game = %{game_state: state}, _guess)
       when state in [:won, :lost] do
-    {game, tally(game)}
+    game
+    |> return_with_tally()
   end
 
+  def make_move(game, guess) do
+    # we need to know if the guess has been alredy used.
+    # if so we will not penalize the user, just return a warning
+    # we need to change make_move behaviour if the guess has been already used
+    # For that we need a call to MapSet.member?() but we cannot do that in
+    # a guard clause cause MapSet is not a basic member.
+    # So we create a new private function `accept_guess` and use pattern matching
+    accept_guess(game, guess, MapSet.member?(game.used, guess))
+    |> return_with_tally()
+  end
+
+  #####################################################################################
+
+  # We need to return a tally from a game.
+  # FIXME - Right now this function does not handle `letters`
   defp tally(game) do
     %{
       turns_left: game.turns_left,
@@ -63,4 +80,34 @@ defmodule Hangman.Impl.Game do
       used: game.used |> MapSet.to_list() |> Enum.sort()
     }
   end
+
+  # NOTE - This is just a "comodity" function right now.
+  #     We need to return a tuple {game, tally} from make_move
+  #     We have created accept_guess that returns an updated game
+  #     and we need to create a tally from that updated game.
+  #     we could have done
+  #     ```
+  #     game = accept_guess(game, guess, already_used)
+  #     {game, tally(game)}
+  #     ```
+  #     But that does not seems like Elixir.
+  #     Also with this function we can have some kind of homogeneous
+  #     way to handle return values in all the make_move variants
+  @spec return_with_tally(t) :: {t, Type.tally()}
+  defp return_with_tally(game) do
+    {game, tally(game)}
+  end
+
+  #####################################################################################
+  # Get a game and a guess and return a new game
+  @spec accept_guess(t, String.t(), bool) :: t
+  defp accept_guess(game, _guess, _guess_already_used = true) do
+    %{game | game_state: :already_used}
+  end
+
+  defp accept_guess(game, guess, _guess_already_used) do
+    %{game | used: MapSet.put(game.used, guess)}
+  end
+
+  #####################################################################################
 end
