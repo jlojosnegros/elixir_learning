@@ -71,7 +71,7 @@ defmodule HangmanImplGameTest do
   test "we recognize a letter in the word" do
     game = Game.new_game("wombat")
 
-    {game, tally} = Game.make_move(game, "m")
+    {_game, tally} = Game.make_move(game, "m")
     assert tally.game_state == :good_guess
   end
 
@@ -83,7 +83,7 @@ defmodule HangmanImplGameTest do
     {game, tally} = Game.make_move(game, "w")
     assert tally.game_state == :good_guess
 
-    {game, tally} = Game.make_move(game, "y")
+    {_game, tally} = Game.make_move(game, "y")
     assert tally.game_state == :bad_guess
   end
 
@@ -93,8 +93,26 @@ defmodule HangmanImplGameTest do
     # [ "guess", :expected_state_result_from_guess , turns left,  <current word status>, <letters used>]
     [
       ["a", :bad_guess, 6, ["_", "_", "_", "_", "_"], ["a"]],
+      ["a", :already_used, 6, ["_", "_", "_", "_", "_"], ["a"]],
       ["e", :good_guess, 6, ["_", "e", "_", "_", "_"], ["a", "e"]],
       ["x", :bad_guess, 5, ["_", "e", "_", "_", "_"], ["a", "e", "x"]]
+    ]
+    |> test_sequence_of_moves()
+  end
+
+  test "can handle a winning game" do
+    # trying to guess "hello" word
+    # each element is a movement with
+    # [ "guess", :expected_state_result_from_guess , turns left,  <current word status>, <letters used>]
+    [
+      ["a", :bad_guess, 6, ["_", "_", "_", "_", "_"], Enum.sort(["a"])],
+      ["a", :already_used, 6, ["_", "_", "_", "_", "_"], Enum.sort(["a"])],
+      ["e", :good_guess, 6, ["_", "e", "_", "_", "_"], Enum.sort(["a", "e"])],
+      ["x", :bad_guess, 5, ["_", "e", "_", "_", "_"], Enum.sort(["a", "e", "x"])],
+      ["l", :good_guess, 5, ["_", "e", "l", "l", "_"], Enum.sort(["a", "e", "x", "l"])],
+      ["o", :good_guess, 5, ["_", "e", "l", "l", "o"], Enum.sort(["a", "e", "x", "l", "o"])],
+      ["y", :bad_guess, 4, ["_", "e", "l", "l", "o"], Enum.sort(["a", "e", "x", "l", "o", "y"])],
+      ["h", :won, 4, ["h", "e", "l", "l", "o"], Enum.sort(["a", "e", "x", "l", "o", "y", "h"])]
     ]
     |> test_sequence_of_moves()
   end

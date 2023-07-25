@@ -71,12 +71,11 @@ defmodule Hangman.Impl.Game do
   #####################################################################################
 
   # We need to return a tally from a game.
-  # FIXME - Right now this function does not handle `letters`
   defp tally(game) do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
-      letters: [],
+      letters: reveal_guessed_letters(game.letters, game.used),
       used: game.used |> MapSet.to_list() |> Enum.sort()
     }
   end
@@ -147,6 +146,7 @@ defmodule Hangman.Impl.Game do
     %{game | game_state: :lost}
   end
 
+  @spec score_guess(t, boolean) :: t
   defp score_guess(game, _bad_guess) do
     # TLDR: turns_left == 1 ? -> :lost | :bad_guess
     # this is turns_left != 1 -> :bad_guess
@@ -156,4 +156,12 @@ defmodule Hangman.Impl.Game do
   #####################################################################################
   defp maybe_won(true), do: :won
   defp maybe_won(_), do: :good_guess
+  #####################################################################################
+  defp reveal_guessed_letters(letters, used) do
+    Enum.map(letters, fn letter -> MapSet.member?(used, letter) |> maybe_reveal(letter) end)
+  end
+
+  #####################################################################################
+  defp maybe_reveal(_is_member = true, letter), do: letter
+  defp maybe_reveal(_is_member, _letter), do: "_"
 end
