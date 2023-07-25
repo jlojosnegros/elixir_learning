@@ -106,8 +106,54 @@ defmodule Hangman.Impl.Game do
   end
 
   defp accept_guess(game, guess, _guess_already_used) do
+    # Here we know the guess is a new one
+    # now we need to know if is correct or not
+    # and score it
+    # we need to know if the guess is one of the
+    # letters
+    # Enum.member?(game.letters, guess)
+    # would do it.
+    #
+    # This could be a way, but this is not the Elixir way
+    # updated_game = %{game | used: MapSet.put(game.used, guess)}
+    # is_ok = Enum.member?(updated_game.letters, guess)
+    # if ...
+
+    # here we have the updated game
     %{game | used: MapSet.put(game.used, guess)}
+    |> score_guess(Enum.member?(game.letters, guess))
   end
 
   #####################################################################################
+  @spec score_guess(t, boolean) :: t
+  defp score_guess(game, _good_guess = true) do
+    # TLDR:  guessed all letters? -> :won | :good_guess
+    #
+    # if all the letters has been guessed then we :won
+    # otherwise is just a :good_guess
+
+    # We know we have guessed all the letters if all letters in
+    # the word we wanna guess are in the used set, meaning that
+    # the user has tryied them all.
+
+    new_state = maybe_won(MapSet.subset?(MapSet.new(game.letters), game.used))
+    %{game | game_state: new_state}
+  end
+
+  @spec score_guess(t, boolean) :: t
+  defp score_guess(game = %{turns_left: 1}, _bad_guess) do
+    # TLDR: turns_left == 1 ? -> :lost | :bad_guess
+    # this is turns_left == 1 -> :lost
+    %{game | game_state: :lost}
+  end
+
+  defp score_guess(game, _bad_guess) do
+    # TLDR: turns_left == 1 ? -> :lost | :bad_guess
+    # this is turns_left != 1 -> :bad_guess
+    %{game | game_state: :bad_guess, turns_left: game.turns_left - 1}
+  end
+
+  #####################################################################################
+  defp maybe_won(true), do: :won
+  defp maybe_won(_), do: :good_guess
 end
