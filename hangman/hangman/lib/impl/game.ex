@@ -143,7 +143,7 @@ defmodule Hangman.Impl.Game do
   defp score_guess(game = %{turns_left: 1}, _bad_guess) do
     # TLDR: turns_left == 1 ? -> :lost | :bad_guess
     # this is turns_left == 1 -> :lost
-    %{game | game_state: :lost}
+    %{game | game_state: :lost, turns_left: 0}
   end
 
   @spec score_guess(t, boolean) :: t

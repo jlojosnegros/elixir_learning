@@ -117,6 +117,57 @@ defmodule HangmanImplGameTest do
     |> test_sequence_of_moves()
   end
 
+  test "can handle a losing game" do
+    # trying to guess "hello" word
+    # each element is a movement with
+    # [ "guess", :expected_state_result_from_guess , turns left,  <current word status>, <letters used>]
+    [
+      ["a", :bad_guess, 6, ["_", "_", "_", "_", "_"], Enum.sort(["a"])],
+      ["a", :already_used, 6, ["_", "_", "_", "_", "_"], Enum.sort(["a"])],
+      ["e", :good_guess, 6, ["_", "e", "_", "_", "_"], Enum.sort(["a", "e"])],
+      ["x", :bad_guess, 5, ["_", "e", "_", "_", "_"], Enum.sort(["a", "e", "x"])],
+      ["l", :good_guess, 5, ["_", "e", "l", "l", "_"], Enum.sort(["a", "e", "x", "l"])],
+      ["o", :good_guess, 5, ["_", "e", "l", "l", "o"], Enum.sort(["a", "e", "x", "l", "o"])],
+      ["y", :bad_guess, 4, ["_", "e", "l", "l", "o"], Enum.sort(["a", "e", "x", "l", "o", "y"])],
+      [
+        "f",
+        :bad_guess,
+        3,
+        ["_", "e", "l", "l", "o"],
+        Enum.sort(["a", "e", "x", "l", "o", "y", "f"])
+      ],
+      [
+        "r",
+        :bad_guess,
+        2,
+        ["_", "e", "l", "l", "o"],
+        Enum.sort(["a", "e", "x", "l", "o", "y", "f", "r"])
+      ],
+      [
+        "x",
+        :already_used,
+        2,
+        ["_", "e", "l", "l", "o"],
+        Enum.sort(["a", "e", "x", "l", "o", "y", "f", "r"])
+      ],
+      [
+        "w",
+        :bad_guess,
+        1,
+        ["_", "e", "l", "l", "o"],
+        Enum.sort(["a", "e", "x", "l", "o", "y", "f", "r", "w"])
+      ],
+      [
+        "z",
+        :lost,
+        0,
+        ["_", "e", "l", "l", "o"],
+        Enum.sort(["a", "e", "x", "l", "o", "y", "f", "r", "w", "z"])
+      ]
+    ]
+    |> test_sequence_of_moves()
+  end
+
   def test_sequence_of_moves(script) do
     game = Game.new_game("hello")
 
