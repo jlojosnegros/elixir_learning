@@ -28,4 +28,22 @@ defmodule HangmanImplGameTest do
            |> Enum.all?(),
            "incorrect word '#{game.letters}' should not have uppercase"
   end
+
+  test "state does not change if a game is won" do
+    game = Game.new_game("wombat")
+
+    old_game = Map.put(game, :game_state, :won)
+
+    {new_game, _tally} = Game.make_move(old_game, "x")
+    assert new_game == old_game
+  end
+
+  test "state does not change if a game is lost" do
+    game = Game.new_game("wombat")
+
+    old_game = Map.put(game, :game_state, :lost)
+
+    {new_game, _tally} = Game.make_move(old_game, "x")
+    assert new_game == old_game
+  end
 end
