@@ -29,24 +29,16 @@ defmodule TextClient.Impl.Player do
   end
 
   def interact(_state = {game, tally}) do
-    # take current state
-
-    # give feedback about the state
     tally
     |> feedback_for()
     |> IO.puts()
 
-    # display current word
-    IO.puts(current_word(tally))
+    tally
+    |> current_word()
+    |> IO.puts()
 
-    # get next guess
-    guess = get_guess()
-
-    # make move
-    {updated_game, updated_tally} = Hangman.make_move(game, guess)
-
-    # loop again
-    interact({updated_game, updated_tally})
+    Hangman.make_move(game, get_guess())
+    |> interact()
   end
 
   # @type state :: :initializing | :won | :lost | :good_guess | :bad_guess | :already_used
