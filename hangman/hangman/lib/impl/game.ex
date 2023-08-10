@@ -75,7 +75,7 @@ defmodule Hangman.Impl.Game do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
-      letters: reveal_guessed_letters(game.letters, game.used),
+      letters: game |> reveal_guessed_letters(),
       used: game.used |> MapSet.to_list() |> Enum.sort()
     }
   end
@@ -157,8 +157,13 @@ defmodule Hangman.Impl.Game do
   defp maybe_won(true), do: :won
   defp maybe_won(_), do: :good_guess
   #####################################################################################
-  defp reveal_guessed_letters(letters, used) do
-    Enum.map(letters, fn letter -> MapSet.member?(used, letter) |> maybe_reveal(letter) end)
+  defp reveal_guessed_letters(game = %{game_state: :lost}) do
+    game.letters
+  end
+
+  defp reveal_guessed_letters(game) do
+    game.letters
+    |> Enum.map(fn letter -> MapSet.member?(game.used, letter) |> maybe_reveal(letter) end)
   end
 
   #####################################################################################
