@@ -71,7 +71,7 @@ defmodule Hangman.Impl.Game do
   #####################################################################################
 
   # We need to return a tally from a game.
-  defp tally(game) do
+  def tally(game) do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
