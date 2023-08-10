@@ -37,7 +37,7 @@ defmodule TextClient.Impl.Player do
     |> IO.puts()
 
     # display current word
-
+    IO.puts(current_word(tally))
     # get next guess
 
     # make move
@@ -59,4 +59,22 @@ defmodule TextClient.Impl.Player do
 
   defp feedback_for(_tally = %{game_state: :already_used}),
     do: "Please Focus! You already used that letter!"
+
+  defp current_word(tally) do
+    # IO.puts can handle a string or a chardata() type
+    # A possible definition of chardata is "a list of
+    # writeable items that is writeable itself" and it cames
+    # from the old good times when Erlang needed to
+    # handle big lists of data from different sources
+    # Thats the reason why we return a list here
+    # TODO - Investigate about chardata type
+    [
+      "Word so far ",
+      tally.letters |> Enum.join(" "),
+      "    turns left: ",
+      tally.turns_left |> to_string,
+      "    used so far: ",
+      tally.used |> Enum.join(",")
+    ]
+  end
 end
