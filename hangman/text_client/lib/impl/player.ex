@@ -28,7 +28,7 @@ defmodule TextClient.Impl.Player do
     IO.puts("Sorry, you lost... the word was #{tally.letters}")
   end
 
-  def interact(_state = {_game, tally}) do
+  def interact(_state = {game, tally}) do
     # take current state
 
     # give feedback about the state
@@ -38,12 +38,15 @@ defmodule TextClient.Impl.Player do
 
     # display current word
     IO.puts(current_word(tally))
+
     # get next guess
+    guess = get_guess()
 
     # make move
+    {updated_game, updated_tally} = Hangman.make_move(game, guess)
 
     # loop again
-    # interact(state)
+    interact({updated_game, updated_tally})
   end
 
   # @type state :: :initializing | :won | :lost | :good_guess | :bad_guess | :already_used
@@ -76,5 +79,17 @@ defmodule TextClient.Impl.Player do
       "    used so far: ",
       tally.used |> Enum.join(",")
     ]
+  end
+
+  defp get_guess() do
+    # this code isn't perfect by any means
+    # because it does not do any validation
+    # about the user input, but for now
+    # it should do it.
+    IO.gets("Next letter: ")
+    # IO.gets return a complete line including linefeed
+    # So we use trim to eliminate it
+    |> String.trim()
+    |> String.downcase()
   end
 end
