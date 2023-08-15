@@ -2,6 +2,9 @@ defmodule Hangman.Runtime.Server do
   use GenServer
 
   alias Hangman.Impl.Game
+
+  @type t :: pid()
+
   ##########
   ### API (client process)
   ##########
@@ -9,7 +12,7 @@ defmodule Hangman.Runtime.Server do
     GenServer.start_link(__MODULE__, _args = nil)
   end
 
-  @spec make_move(pid(), String.t()) :: Game.t()
+  @spec make_move(pid(), String.t()) :: Hangman.Type.tally()
   def make_move(pid, guess) do
     GenServer.call(pid, {:make_move, guess})
   end
