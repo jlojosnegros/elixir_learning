@@ -1,15 +1,9 @@
 defmodule Dictionary do
+  @opaque t :: Dictionary.Impl.WordList.t()
 
-  # module attribute: Created at compile-time
-  # Value is calculated by running this at compile-time
-  # so there is no need to release words.txt
-  @word_list "assets/words.txt"
-    |> File.read!()
-    |> String.split(~r/\n/, trim: true)
+  @spec start() :: t()
+  defdelegate start(), to: Dictionary.Impl.WordList
 
-
-  def random_word do
-    @word_list
-    |> Enum.random()
-  end
+  @spec random_word(t()) :: String.t()
+  defdelegate random_word(state), to: Dictionary.Impl.WordList
 end

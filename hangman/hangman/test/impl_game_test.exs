@@ -161,7 +161,7 @@ defmodule HangmanImplGameTest do
         "z",
         :lost,
         0,
-        ["_", "e", "l", "l", "o"],
+        ["h", "e", "l", "l", "o"],
         Enum.sort(["a", "e", "x", "l", "o", "y", "f", "r", "w", "z"])
       ]
     ]

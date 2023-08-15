@@ -26,7 +26,9 @@ defmodule Hangman.Impl.Game do
 
   @spec new_game :: t()
   def new_game do
-    new_game(Dictionary.random_word())
+    Dictionary.start()
+    |> Dictionary.random_word()
+    |> new_game()
   end
 
   @spec new_game(String.t()) :: t()
@@ -71,11 +73,11 @@ defmodule Hangman.Impl.Game do
   #####################################################################################
 
   # We need to return a tally from a game.
-  defp tally(game) do
+  def tally(game) do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
-      letters: reveal_guessed_letters(game.letters, game.used),
+      letters: game |> reveal_guessed_letters(),
       used: game.used |> MapSet.to_list() |> Enum.sort()
     }
   end
@@ -157,8 +159,13 @@ defmodule Hangman.Impl.Game do
   defp maybe_won(true), do: :won
   defp maybe_won(_), do: :good_guess
   #####################################################################################
-  defp reveal_guessed_letters(letters, used) do
-    Enum.map(letters, fn letter -> MapSet.member?(used, letter) |> maybe_reveal(letter) end)
+  defp reveal_guessed_letters(game = %{game_state: :lost}) do
+    game.letters
+  end
+
+  defp reveal_guessed_letters(game) do
+    game.letters
+    |> Enum.map(fn letter -> MapSet.member?(game.used, letter) |> maybe_reveal(letter) end)
   end
 
   #####################################################################################
