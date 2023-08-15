@@ -1,9 +1,9 @@
 defmodule Dictionary do
-  @opaque t :: Dictionary.Impl.WordList.t()
+  @opaque t :: Dictionary.Runtime.Server.t()
 
-  @spec start() :: t()
-  defdelegate start(), to: Dictionary.Impl.WordList
+  @spec start_link :: {:error, any} | {:ok, pid}
+  defdelegate start_link(), to: Dictionary.Runtime.Server
 
   @spec random_word(t()) :: String.t()
-  defdelegate random_word(state), to: Dictionary.Impl.WordList
+  defdelegate random_word(state), to: Dictionary.Runtime.Server
 end
