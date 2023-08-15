@@ -26,9 +26,7 @@ defmodule Hangman.Impl.Game do
 
   @spec new_game :: t()
   def new_game do
-    {:ok, pid } = Dictionary.start_link()
-    pid
-    |> Dictionary.random_word()
+    Dictionary.random_word()
     |> new_game()
   end
 
