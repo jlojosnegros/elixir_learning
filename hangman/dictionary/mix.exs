@@ -12,8 +12,11 @@ defmodule Dictionary.MixProject do
   end
 
   # Run "mix help compile.app" to learn about applications.
+  # Returns a list of the applications for the runtime to start
   def application do
     [
+      # Modules that need to be stared by the runtime env
+      mod: {Dictionary.Runtime.Application, []},
       extra_applications: [:logger]
     ]
   end

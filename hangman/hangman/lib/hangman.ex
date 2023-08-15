@@ -4,14 +4,14 @@ defmodule Hangman do
   This is the API for Hangman game
   """
 
-  alias Hangman.Impl.Game
+  alias Hangman.Runtime.Server
   alias Hangman.Type
 
   # NOTE -  We now define the proper type. BUT as we want this to be an implementation detail
   #     we define it in the Impl module, and here we just refer to it to hide that fact outside
   #       Also instead of `type` we use `opaque` to avoid any user to be able to
   #     peak inside our data type and do something with it.
-  @opaque game :: Game.t()
+  @opaque game :: Server.t()
 
   @doc """
   Create a new game.
@@ -21,7 +21,11 @@ defmodule Hangman do
   Should be the first function called for any new game
   """
   @spec new_game() :: game
-  defdelegate new_game, to: Game
+  def new_game() do
+    {:ok, pid} = Server.start_link()
+    pid
+  end
+
   # NOTE - We use `defdelegate` to keep API nice and simple without any code.
   # This will work but we can do better
   # def new_game do
@@ -48,9 +52,14 @@ defmodule Hangman do
   - game: New game state after the guess
   - tally: Client side information (turns left, letters used, etc)
   """
-  @spec make_move(game, String.t()) :: {game, Type.tally()}
-  defdelegate make_move(game, guess), to: Game
+  # @spec make_move(game, String.t()) :: {game, Type.tally()}
+  @spec make_move(game(), String.t()) :: Type.tally()
+  def make_move(game, guess) do
+    Server.make_move(game, guess)
+  end
 
   @spec tally(game) :: Type.tally()
-  defdelegate tally(game), to: Game
+  def tally(game) do
+    Server.tally(game)
+  end
 end
