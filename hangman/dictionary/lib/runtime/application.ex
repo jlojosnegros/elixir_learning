@@ -7,6 +7,27 @@ defmodule Dictionary.Runtime.Application do
 
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
-    Dictionary.Runtime.Server.start_link()
+    # start the supervisor
+
+    children = [
+      # module (with start_link function), parameters
+      {Dictionary.Runtime.Server, []}
+    ]
+
+    options = [
+      # name of the supervisor
+      name: Dictionary.Runtime.Supervisor,
+
+      # strategy: one_for_one | :one_for_all | :rest_for_one | :simple_one_for_one
+      strategy: :one_for_one
+
+      # if more than "n" restarts occur in "s" seconds
+      # the Supervisor shuts down all supervised processes and
+      # *terminates itself*
+      # max_restarts: n, # default: 1
+      # max_seconds: s, # default: 5
+    ]
+
+    Supervisor.start_link(children, options)
   end
 end
