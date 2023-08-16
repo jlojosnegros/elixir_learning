@@ -22,7 +22,9 @@ defmodule Hangman do
   """
   @spec new_game() :: game
   def new_game() do
-    {:ok, pid} = Server.start_link()
+    # Each time a new game is created we ask the DynamicSupervisor
+    # to handle the creation and supervise the new game.
+    {:ok, pid} = Hangman.Runtime.Application.start_game()
     pid
   end
 

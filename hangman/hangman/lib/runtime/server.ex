@@ -8,7 +8,10 @@ defmodule Hangman.Runtime.Server do
   ##########
   ### API (client process)
   ##########
-  def start_link() do
+  # As now Hangman.Runtime.Server will be started by a Supervisor
+  # (in fact by a DynamicSupervisor) we need to handle the initial
+  # parameter ( just ignoring is ok)
+  def start_link(_init) do
     GenServer.start_link(__MODULE__, _args = nil)
   end
 
