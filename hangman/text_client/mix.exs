@@ -14,6 +14,10 @@ defmodule TextClient.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      # (2)
+      # This is how we instruct the runtime to NOT start the hangman
+      # application and only load the code.
+      included_applications: [:hangman],
       extra_applications: [:logger]
     ]
   end
@@ -21,9 +25,15 @@ defmodule TextClient.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      # (1)
+      # Here we tell the runtime that we depend on hangman
+      # and as Hangman is an application the runtime starts
+      # all the applications that we depend on by default.
+      # *BUT* we do not want to start hangman servers in the client.
+      # we just want the code to be loaded because we need the API
+      # to talk to the server.
+      # See (2)
       {:hangman, path: "../hangman/"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end
