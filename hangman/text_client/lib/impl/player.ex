@@ -37,8 +37,8 @@ defmodule TextClient.Impl.Player do
     |> current_word()
     |> IO.puts()
 
-    Hangman.make_move(game, get_guess())
-    |> interact()
+    tally = Hangman.make_move(game, get_guess())
+    interact({game, tally})
   end
 
   # @type state :: :initializing | :won | :lost | :good_guess | :bad_guess | :already_used
