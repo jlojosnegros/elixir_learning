@@ -22,7 +22,9 @@ defmodule B1Web.HangmanController do
     # Out "game" variable is a token the server has
     # given us to identify a game so that is what we
     # are going to save
-    put_session(conn, :game, game)
+    #NOTE - "conn" is unmutable, we need to capture
+    # the new conn
+    conn = put_session(conn, :game, game)
 
 
     # At last ... we need to show something to the user.
@@ -54,6 +56,10 @@ defmodule B1Web.HangmanController do
 
     # Then we just need to call the Hangman server
     # to make the move with the readed data.
+    #NOTE - This fails because "game" is nil **WHY**??
+    # Game is nil because "put_session" does not modify
+    # the actual "conn" as it is unmutable, but returns
+    # a new one that we need to capture.
     tally = Hangman.make_move(game,guess)
 
     # And render again the same template with the
