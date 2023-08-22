@@ -62,6 +62,9 @@ defmodule B1Web.HangmanController do
     # a new one that we need to capture.
     tally = Hangman.make_move(game, guess)
 
+    # We need to clean the input parameter to improve UX
+    conn = put_in(conn.params["make_move"]["guess"], "")
+
     # And render again the same template with the
     # new tally information returned by server
     render(conn, "game.html", tally: tally)
