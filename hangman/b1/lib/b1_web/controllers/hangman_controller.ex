@@ -43,10 +43,6 @@ defmodule B1Web.HangmanController do
   end
 
   def update(conn, params) do
-    # We can get the game from the session as we have
-    # stored it earlier in the new method.
-    game = get_session(conn, :game)
-
     # The guess comes in the params from the form.
     # In the template we have instructed Elixir to
     # save the form data into an structure(map) call
@@ -54,19 +50,23 @@ defmodule B1Web.HangmanController do
     # called "guess" ... so here we can read it.
     guess = params["make_move"]["guess"]
 
-    # Then we just need to call the Hangman server
-    # to make the move with the readed data.
-    # NOTE - This fails because "game" is nil **WHY**??
-    # Game is nil because "put_session" does not modify
-    # the actual "conn" as it is unmutable, but returns
-    # a new one that we need to capture.
-    tally = Hangman.make_move(game, guess)
+    tally =
+      conn
+      # We can get the game from the session as we have
+      # stored it earlier in the new method.
+      |> get_session(:game)
+      # Then we just need to call the Hangman server
+      # to make the move with the readed data.
+      # NOTE - This fails because "game" is nil **WHY**??
+      # Game was nil because "put_session" does not modify
+      # the actual "conn", as it is unmutable, but returns
+      # a new one that we need to capture.
+      |> Hangman.make_move(guess)
 
     # We need to clean the input parameter to improve UX
-    conn = put_in(conn.params["make_move"]["guess"], "")
-
+    put_in(conn.params["make_move"]["guess"], "")
     # And render again the same template with the
     # new tally information returned by server
-    render(conn, "game.html", tally: tally)
+    |> render("game.html", tally: tally)
   end
 end

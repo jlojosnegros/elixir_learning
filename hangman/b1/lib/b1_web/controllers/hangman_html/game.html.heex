@@ -15,7 +15,10 @@
   </p>
 </div>
 
-<%= form_for(@conn,~p"/hangman", [ as: "make_move", method: :put], fn f -> %>
+<%= form_for(@conn,
+        ~p"/hangman",
+        [ as: "make_move", method: :put], 
+        fn f -> %>
   <%= text_input(f, :guess) %>
   <%= submit("Make next guess") %>
 <% end) %>
