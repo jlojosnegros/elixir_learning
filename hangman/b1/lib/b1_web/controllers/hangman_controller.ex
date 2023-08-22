@@ -11,6 +11,13 @@ defmodule B1Web.HangmanController do
     # here is where we need to create a new game
     game = Hangman.new_game()
 
+    # At last ... we need to show something to the user.
+    # So we need to "render" some web page and show
+    # some game information on it.
+    # Hangman server provides a way to get information
+    # from a particular game, the "tally" function
+    tally = Hangman.tally(game)
+
     # we need some way to keep track of the game
     # for each user.
     # Here is where user sessions come in handy
@@ -22,24 +29,17 @@ defmodule B1Web.HangmanController do
     # Out "game" variable is a token the server has
     # given us to identify a game so that is what we
     # are going to save
-    #NOTE - "conn" is unmutable, we need to capture
+
+    # NOTE - "conn" is unmutable, we need to capture
     # the new conn
-    conn = put_session(conn, :game, game)
-
-
-    # At last ... we need to show something to the user.
-    # So we need to "render" some web page and show
-    # some game information on it.
-    # Hangman server provides a way to get information
-    # from a particular game, the "tally" function
-    tally = Hangman.tally(game)
-
+    conn
+    |> put_session(:game, game)
     # And here we use the "assign feature" from phoenix
     # to make the "tally" variable available in the
     # view ( and template ) under the name "tally"
     # note: in the template we can refer to it inside the
     # elixir code blocks (<% %>) as "@tally"
-    render(conn, "game.html", tally: tally)
+    |> render("game.html", tally: tally)
   end
 
   def update(conn, params) do
@@ -56,11 +56,11 @@ defmodule B1Web.HangmanController do
 
     # Then we just need to call the Hangman server
     # to make the move with the readed data.
-    #NOTE - This fails because "game" is nil **WHY**??
+    # NOTE - This fails because "game" is nil **WHY**??
     # Game is nil because "put_session" does not modify
     # the actual "conn" as it is unmutable, but returns
     # a new one that we need to capture.
-    tally = Hangman.make_move(game,guess)
+    tally = Hangman.make_move(game, guess)
 
     # And render again the same template with the
     # new tally information returned by server
