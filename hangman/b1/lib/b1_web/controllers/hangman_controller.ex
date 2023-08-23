@@ -11,13 +11,6 @@ defmodule B1Web.HangmanController do
     # here is where we need to create a new game
     game = Hangman.new_game()
 
-    # At last ... we need to show something to the user.
-    # So we need to "render" some web page and show
-    # some game information on it.
-    # Hangman server provides a way to get information
-    # from a particular game, the "tally" function
-    tally = Hangman.tally(game)
-
     # we need some way to keep track of the game
     # for each user.
     # Here is where user sessions come in handy
@@ -34,12 +27,9 @@ defmodule B1Web.HangmanController do
     # the new conn
     conn
     |> put_session(:game, game)
-    # And here we use the "assign feature" from phoenix
-    # to make the "tally" variable available in the
-    # view ( and template ) under the name "tally"
-    # note: in the template we can refer to it inside the
-    # elixir code blocks (<% %>) as "@tally"
-    |> render("game.html", tally: tally)
+    # here we use again the PRG to avoid duplicated
+    # modifications.
+    |> redirect(to: ~p"/hangman/current")
   end
 
   def update(conn, params) do
@@ -50,23 +40,41 @@ defmodule B1Web.HangmanController do
     # called "guess" ... so here we can read it.
     guess = params["make_move"]["guess"]
 
-    tally =
-      conn
-      # We can get the game from the session as we have
-      # stored it earlier in the new method.
-      |> get_session(:game)
-      # Then we just need to call the Hangman server
-      # to make the move with the readed data.
-      # NOTE - This fails because "game" is nil **WHY**??
-      # Game was nil because "put_session" does not modify
-      # the actual "conn", as it is unmutable, but returns
-      # a new one that we need to capture.
-      |> Hangman.make_move(guess)
-
     # We need to clean the input parameter to improve UX
     put_in(conn.params["make_move"]["guess"], "")
-    # And render again the same template with the
-    # new tally information returned by server
-    |> render("game.html", tally: tally)
+    # We can get the game from the session as we have
+    # stored it earlier in the new method.
+    |> get_session(:game)
+    # Then we just need to call the Hangman server
+    # to make the move with the readed data.
+    # NOTE - This fails because "game" is nil **WHY**??
+    # Game was nil because "put_session" does not modify
+    # the actual "conn", as it is unmutable, but returns
+    # a new one that we need to capture.
+    |> Hangman.make_move(guess)
+
+    # Here we just do not render any page.
+    # instead we are using redirection.
+    # This technique is called PRG for
+    # POST-REDIRECT-GET
+    # Whenever you hit reload in a browser it resend
+    # the last request. If the last request is a POST/PUT
+    # the request to change the server status will be sent again
+    # and that could cause problems.
+    # TO avoid that servers *DO NOT RENDER PAGES ON PUT/POST*
+    # instead they redirect the browser to another page where
+    # the result of the change is showed. This way the browser
+    # send a GET request as the last one and any RELOAD will only
+    # ask for the same status not triggering any duplicated change.
+    redirect(conn, to: ~p"/hangman/current")
+  end
+
+  def show(conn, _params) do
+    tally =
+      conn
+      |> get_session(:game)
+      |> Hangman.tally()
+
+    render(conn, "game.html", tally: tally)
   end
 end
