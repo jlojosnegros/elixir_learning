@@ -1,9 +1,13 @@
 defmodule Hangman.Runtime.Server do
   use GenServer
 
+  alias Hangman.Runtime.Watchdog
   alias Hangman.Impl.Game
 
   @type t :: pid()
+
+  # 1 hour
+  @idle_timeout 1 * 60 * 60 * 1000
 
   ##########
   ### API (client process)
@@ -29,15 +33,18 @@ defmodule Hangman.Runtime.Server do
   ### Callbacks (server)
   ##########
   def init(_init_arg) do
-    {:ok, Game.new_game()}
+    watcher = Watchdog.start(@idle_timeout)
+    {:ok, {Game.new_game(), watcher}}
   end
 
-  def handle_call({:make_move, guess}, _from, game) do
+  def handle_call({:make_move, guess}, _from, {game, watcher}) do
+    Watchdog.im_alive(watcher)
     {updated_game, tally} = Game.make_move(game, guess)
-    {:reply, tally, updated_game}
+    {:reply, tally, {updated_game, watcher}}
   end
 
-  def handle_call({:tally}, _from, game) do
-    {:reply, Game.tally(game), game}
+  def handle_call({:tally}, _from, {game, watcher}) do
+    Watchdog.im_alive(watcher)
+    {:reply, Game.tally(game), {game, watcher}}
   end
 end
