@@ -17,7 +17,7 @@ defmodule B2Web.Router do
   scope "/", B2Web do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", Live.Game
   end
 
   # Other scopes may use custom stacks.
