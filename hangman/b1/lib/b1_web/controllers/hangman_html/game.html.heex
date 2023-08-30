@@ -1,0 +1,43 @@
+<title>This is the game</title>
+
+<div id="game" class="row">
+  <div class="column">
+    <pre>
+    <%= figure_for(@tally.turns_left) %>
+    </pre>
+  </div>
+
+  <%!-- 
+  <.button>Send!</.button>
+  <.button phx-click="go" class="ml-2">Send!</.button> 
+  --%>
+  <%!-- 
+  This was the old way to split templates to share code or
+  just to make them easy to read. 
+  Create a new "partial template" and render it.
+  But things have changed a lot in Phoenix with LiveView.
+  Now render is not defined by default and you need to use "Components"
+  to share code.
+  The problem is that I do not a thin about Phoenix or web development
+  and I dont give a fucking shit about it, so I will keep the table here.
+  <%= render("_tally_info.html", tally: @tally) %> 
+  --%>
+  <div class="column">
+    <table class="tally">
+      <tr>
+        <th>Turns left:</th>
+        <td><%= @tally.turns_left %></td>
+      </tr>
+      <tr>
+        <th>Letters used:</th>
+        <td class="spread"><%= @tally.used |> Enum.join(", ") %></td>
+      </tr>
+      <tr>
+        <th>Words so far:</th>
+        <td class="spread"><%= @tally.letters |> Enum.join(" ") %></td>
+      </tr>
+    </table>
+  </div>
+  <%= move_status(@tally.game_state) |> raw %>
+  <%= continue_or_try_again(@conn, @tally.game_state) %>
+</div>

@@ -22,7 +22,9 @@ defmodule Hangman do
   """
   @spec new_game() :: game
   def new_game() do
-    {:ok, pid} = Server.start_link()
+    # Each time a new game is created we ask the DynamicSupervisor
+    # to handle the creation and supervise the new game.
+    {:ok, pid} = Hangman.Runtime.Application.start_game()
     pid
   end
 
@@ -49,10 +51,8 @@ defmodule Hangman do
   - guess: New guess for the game.
 
   Return:
-  - game: New game state after the guess
   - tally: Client side information (turns left, letters used, etc)
   """
-  # @spec make_move(game, String.t()) :: {game, Type.tally()}
   @spec make_move(game(), String.t()) :: Type.tally()
   def make_move(game, guess) do
     Server.make_move(game, guess)

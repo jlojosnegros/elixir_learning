@@ -3,13 +3,26 @@ defmodule TextClient.Impl.Player do
   @typep tally :: Hangman.tally()
   @typep state :: {game, tally}
 
-  @spec start() :: :ok
-  def start() do
+  @spec start(game()) :: :ok
+  def start(game) do
     # need to end calling interact
     # so we need a game and a tally
 
-    # game is quite easy to get
-    game = Hangman.new_game()
+    # to get a game from the remote server
+    # we need to call connect... but
+    # that seems to be off limits from
+    # the implementation and more related
+    # with the networking and runtime.
+    # That is why we have created a new
+    # runtime module (RemoteHangman) to
+    # handle that implementation details.
+    #
+    # We can change the line and call "connect" from here
+    # but that would mean the implementention depends on
+    # the runtime ... which is not a good thing.
+    # For that reason we are gonna change the start
+    # function to accept a game  instead of creating it
+    # internally
 
     # but there is no way to get a tally
     # in the Hangman API ( so lets create it)
@@ -37,8 +50,8 @@ defmodule TextClient.Impl.Player do
     |> current_word()
     |> IO.puts()
 
-    Hangman.make_move(game, get_guess())
-    |> interact()
+    tally = Hangman.make_move(game, get_guess())
+    interact({game, tally})
   end
 
   # @type state :: :initializing | :won | :lost | :good_guess | :bad_guess | :already_used

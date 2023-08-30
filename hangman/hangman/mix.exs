@@ -14,6 +14,10 @@ defmodule Hangman.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      # To make Hangman a Service it need to be an Application first
+      # here we instruct the runtime to start the application
+      # with the Module and the params to start
+      mod: {Hangman.Runtime.Application, []},
       extra_applications: [:logger]
     ]
   end
