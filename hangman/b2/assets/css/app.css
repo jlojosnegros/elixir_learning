@@ -3,3 +3,17 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+
+.one-letter {
+    color: #8888bb
+}
+
+.one-leter.correct {
+    color: #88bb88
+}
+
+.letters .one-letter {
+    width: 1em;
+    font-size: 300%;
+    display: inline-block;
+}
